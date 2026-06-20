@@ -1,0 +1,1880 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TJA Tap Chart Maker</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101113;
+      --panel: #181a1f;
+      --panel-2: #202329;
+      --line: #30343d;
+      --text: #f0f3f7;
+      --muted: #9ca6b5;
+      --accent: #2dd4bf;
+      --red: #ff596b;
+      --blue: #55a7ff;
+      --yellow: #ffd166;
+      --shadow: 0 18px 55px rgba(0, 0, 0, .35);
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(45, 212, 191, .10), transparent 360px),
+        var(--bg);
+      color: var(--text);
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      color: var(--text);
+      background: var(--panel-2);
+      min-height: 38px;
+      border-radius: 7px;
+      padding: 0 12px;
+      cursor: pointer;
+    }
+
+    button:hover { border-color: #4b5361; }
+    button.primary { background: var(--accent); color: #041211; border-color: transparent; font-weight: 700; }
+    button.danger { color: #ffd6dc; border-color: rgba(255, 89, 107, .5); }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--text);
+      background: #111318;
+      min-height: 38px;
+      padding: 8px 10px;
+      outline: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(45, 212, 191, .16);
+    }
+
+    textarea {
+      min-height: 340px;
+      resize: vertical;
+      font-family: "Cascadia Mono", Consolas, monospace;
+      line-height: 1.5;
+      tab-size: 2;
+    }
+
+    .app {
+      width: min(1380px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 30px;
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 4vw, 42px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: 8px;
+      max-width: 780px;
+      line-height: 1.5;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--muted);
+      white-space: nowrap;
+      font-size: 14px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 99px;
+      background: #596170;
+      box-shadow: 0 0 0 5px rgba(89, 97, 112, .16);
+    }
+
+    .dot.live {
+      background: var(--red);
+      box-shadow: 0 0 0 5px rgba(255, 89, 107, .16);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(360px, .85fr);
+      gap: 16px;
+    }
+
+    .panel {
+      background: rgba(24, 26, 31, .92);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel > .head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel h2 {
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    .body { padding: 16px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    label span {
+      min-height: 16px;
+    }
+
+    .wide { grid-column: span 2; }
+    .full { grid-column: 1 / -1; }
+
+    .transport {
+      display: grid;
+      grid-template-columns: auto auto auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .time {
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+      min-width: 116px;
+    }
+
+    .seek {
+      accent-color: var(--accent);
+      padding: 0;
+    }
+
+    .volume-row {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 10px;
+      align-items: center;
+    }
+
+    .volume-control {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      min-width: 0;
+    }
+
+    .volume-control input {
+      width: 100%;
+      accent-color: var(--accent);
+      padding: 0;
+    }
+
+    .volume-value {
+      width: 4ch;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .key {
+      min-height: 94px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #14171c;
+      transition: transform .08s ease, border-color .08s ease, background .08s ease;
+      user-select: none;
+    }
+
+    .key b {
+      font-size: 28px;
+      display: block;
+      text-align: center;
+    }
+
+    .key small {
+      color: var(--muted);
+    }
+
+    .key.active {
+      transform: translateY(2px);
+      border-color: var(--accent);
+      background: rgba(45, 212, 191, .12);
+    }
+
+    .waveform {
+      margin-top: 16px;
+      height: 92px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #0d1015;
+      position: relative;
+      overflow: hidden;
+      cursor: crosshair;
+    }
+
+    .waveform canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .waveform .empty {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 13px;
+      pointer-events: none;
+    }
+
+    .waveform-controls {
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      display: flex;
+      gap: 6px;
+      z-index: 2;
+    }
+
+    .waveform-controls select,
+    .waveform-controls button {
+      width: auto;
+      min-height: 28px;
+      height: 28px;
+      padding: 0 8px;
+      font-size: 12px;
+      background: rgba(17, 19, 24, .86);
+      backdrop-filter: blur(8px);
+    }
+
+    .waveform-scroll {
+      margin-top: 6px;
+      width: 100%;
+      accent-color: var(--accent);
+      padding: 0;
+    }
+
+    .strip {
+      margin-top: 16px;
+      height: 168px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, .055), transparent 22%, transparent 78%, rgba(0, 0, 0, .28)),
+        #0c0f14;
+      position: relative;
+      overflow: hidden;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .strip.dragging-lane {
+      cursor: grabbing;
+    }
+
+    .strip::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 70px;
+      transform: translateY(-50%);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .035) 14%, rgba(255, 255, 255, .035) 86%, rgba(0, 0, 0, .35)),
+        #262a31;
+      border-top: 1px solid rgba(255, 255, 255, .18);
+      border-bottom: 1px solid rgba(0, 0, 0, .75);
+      box-shadow: inset 0 16px 24px rgba(255, 255, 255, .035), inset 0 -14px 20px rgba(0, 0, 0, .34);
+      z-index: 0;
+    }
+
+    .strip::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 2px;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, .12);
+      z-index: 1;
+    }
+
+    .grid-line {
+      position: absolute;
+      top: 29px;
+      bottom: 29px;
+      width: 1px;
+      background: rgba(255, 255, 255, .055);
+      transform: translateX(-50%);
+      z-index: 2;
+    }
+
+    .grid-line.beat {
+      background: rgba(255, 255, 255, .105);
+    }
+
+    .grid-line.subdivision {
+      background: rgba(255, 255, 255, .035);
+    }
+
+    .grid-line.measure {
+      width: 2px;
+      background: rgba(45, 212, 191, .36);
+    }
+
+    .measure-label {
+      position: absolute;
+      top: 8px;
+      left: 5px;
+      color: rgba(240, 243, 247, .52);
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      transform: translateX(0);
+      pointer-events: none;
+    }
+
+    .playhead {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 58px;
+      height: 58px;
+      border-radius: 99px;
+      border: 4px solid rgba(45, 212, 191, .9);
+      background: radial-gradient(circle, rgba(45, 212, 191, .14), rgba(45, 212, 191, .035) 58%, transparent 62%);
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 0 2px rgba(4, 18, 17, .8), 0 0 24px rgba(45, 212, 191, .22);
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .playhead::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -58px;
+      bottom: -58px;
+      width: 2px;
+      transform: translateX(-50%);
+      background: rgba(45, 212, 191, .48);
+    }
+
+    .note {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border-radius: 99px;
+      border: 3px solid rgba(255, 255, 255, .84);
+      transform: translate(-50%, -50%);
+      box-shadow: inset 0 5px 8px rgba(255, 255, 255, .18), inset 0 -8px 10px rgba(0, 0, 0, .22), 0 5px 16px rgba(0, 0, 0, .42);
+      z-index: 3;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .note.dragging {
+      cursor: grabbing;
+      opacity: .82;
+      z-index: 5;
+      box-shadow: 0 0 0 6px rgba(45, 212, 191, .18), 0 8px 20px rgba(0, 0, 0, .45);
+    }
+
+    .note.don { background: var(--red); top: 50%; }
+    .note.ka { background: var(--blue); top: 50%; }
+    .note.big {
+      width: 42px;
+      height: 42px;
+      border-width: 4px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 9px;
+      background: #121419;
+    }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 0 10px;
+      color: var(--text);
+      background: #111318;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle input {
+      width: auto;
+      min-height: auto;
+      accent-color: var(--accent);
+    }
+
+    .swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 99px;
+      display: inline-block;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 9px 10px;
+      border-bottom: 1px solid rgba(48, 52, 61, .7);
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #181a1f;
+      color: var(--muted);
+      z-index: 1;
+    }
+
+    .type-don { color: #ff98a4; }
+    .type-ka { color: #9acaff; }
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      background: #f0f3f7;
+      color: #101113;
+      border-radius: 8px;
+      padding: 11px 14px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity .2s ease, transform .2s ease;
+      pointer-events: none;
+      font-weight: 700;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 980px) {
+      header { align-items: start; flex-direction: column; }
+      .layout { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .transport { grid-template-columns: 1fr 1fr 1fr; }
+      .seek, .time { grid-column: 1 / -1; width: 100%; }
+    }
+
+    @media (max-width: 560px) {
+      .app { width: min(100% - 20px, 1380px); padding-top: 14px; }
+      .grid { grid-template-columns: 1fr; }
+      .wide { grid-column: auto; }
+      .keys { grid-template-columns: repeat(2, 1fr); }
+      .transport { grid-template-columns: 1fr 1fr; }
+      .transport button { width: 100%; }
+      .volume-row { grid-template-columns: 1fr; }
+      h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>TJA Tap Chart Maker</h1>
+        <div class="subtitle">曲を読み込み、再生に合わせてDFJKを叩くと、BPMと拍位置から近い音価へ自動クォンタイズしてTJA譜面を生成します。</div>
+      </div>
+      <div class="status"><span id="recDot" class="dot"></span><span id="statusText">待機中</span></div>
+    </header>
+
+    <section class="layout">
+      <div class="panel">
+        <div class="head">
+          <h2>録音</h2>
+          <div class="actions">
+            <button id="undoBtn" title="最後の音符を消す">Undo</button>
+            <button id="clearBtn" class="danger" title="全音符を消す">Clear</button>
+          </div>
+        </div>
+        <div class="body">
+          <div class="grid">
+            <label class="wide">
+              <span>音源</span>
+              <input id="audioFile" type="file" accept="audio/*">
+            </label>
+            <label>
+              <span>BPM</span>
+              <input id="bpm" type="number" min="20" max="400" step="0.01" value="120">
+            </label>
+            <label>
+              <span>自動検出</span>
+              <button id="detectBpmBtn" type="button">Detect BPM</button>
+            </label>
+            <label>
+              <span>オフセット秒</span>
+              <input id="offset" type="number" step="0.001" value="0">
+            </label>
+            <label>
+              <span>1拍目</span>
+              <button id="setFirstBeatBtn" type="button">Set 1st Beat</button>
+            </label>
+            <label>
+              <span>拍子</span>
+              <select id="meter">
+                <option value="4/4">4/4</option>
+                <option value="3/4">3/4</option>
+                <option value="6/8">6/8</option>
+                <option value="2/4">2/4</option>
+              </select>
+            </label>
+            <label>
+              <span>クォンタイズ単位</span>
+              <select id="maxDiv">
+                <option value="16">16分</option>
+                <option value="24">24分</option>
+                <option value="32">32分</option>
+                <option value="48">48分</option>
+              </select>
+            </label>
+            <label>
+              <span>大音符判定ms</span>
+              <input id="mergeMs" type="number" min="5" max="120" step="1" value="28">
+            </label>
+            <label>
+              <span>Don SE</span>
+              <input id="donSoundFile" type="file" accept="audio/*">
+            </label>
+            <label>
+              <span>Ka SE</span>
+              <input id="kaSoundFile" type="file" accept="audio/*">
+            </label>
+            <label>
+              <span>クォンタイズ</span>
+              <span class="toggle"><input id="autoQuantize" type="checkbox" checked>Auto</span>
+            </label>
+            <label>
+              <span>再クォンタイズ</span>
+              <button id="quantizeNowBtn" type="button">Quantize Now</button>
+            </label>
+            <label>
+              <span>曲名</span>
+              <input id="title" value="Untitled">
+            </label>
+          </div>
+
+          <div class="transport">
+            <button id="playBtn" class="primary">Play</button>
+            <button id="recBtn">Record</button>
+            <button id="stopBtn">Stop</button>
+            <input id="seek" class="seek" type="range" min="0" max="1000" value="0">
+            <div id="time" class="time">0:00.000 / 0:00.000</div>
+            <div class="volume-row">
+              <label class="volume-control">
+                <span>Music</span>
+                <input id="musicVolume" type="range" min="0" max="1" step="0.01" value="1">
+                <span id="musicVolumeValue" class="volume-value">100%</span>
+              </label>
+              <label class="volume-control">
+                <span>Metro</span>
+                <input id="metronomeVolume" type="range" min="0" max="1" step="0.01" value="0.8">
+                <span id="metronomeVolumeValue" class="volume-value">80%</span>
+              </label>
+            </div>
+          </div>
+
+          <audio id="audio" preload="metadata"></audio>
+
+          <div id="waveform" class="waveform" title="Click or drag on the waveform to set the 1st beat">
+            <canvas id="waveformCanvas"></canvas>
+            <div class="waveform-controls">
+              <select id="waveformZoom" title="Waveform zoom">
+                <option value="1">1x</option>
+                <option value="2">2x</option>
+                <option value="4">4x</option>
+                <option value="8">8x</option>
+                <option value="16">16x</option>
+                <option value="32">32x</option>
+              </select>
+              <button id="waveformCenterBtn" type="button" title="Center waveform on playhead">Center</button>
+            </div>
+            <div id="waveformEmpty" class="empty">Load audio to show waveform. Click the waveform to set the 1st beat.</div>
+          </div>
+          <input id="waveformScroll" class="waveform-scroll" type="range" min="0" max="1000" value="500" disabled title="Move zoomed waveform view">
+
+          <div class="keys" aria-label="入力キー">
+            <div class="key" data-key="d"><b>D</b><small>Ka left</small></div>
+            <div class="key" data-key="f"><b>F</b><small>Don left</small></div>
+            <div class="key" data-key="j"><b>J</b><small>Don right</small></div>
+            <div class="key" data-key="k"><b>K</b><small>Ka right</small></div>
+          </div>
+
+          <div id="strip" class="strip">
+            <div class="playhead"></div>
+          </div>
+          <div class="legend">
+            <span class="pill"><span class="swatch" style="background: var(--red)"></span>ドン 1</span>
+            <span class="pill"><span class="swatch" style="background: var(--blue)"></span>カッ 2</span>
+            <span class="pill"><span class="swatch" style="background: var(--yellow)"></span>両手入力は大音符 3/4</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="head">
+          <h2>TJA出力</h2>
+          <div class="actions">
+            <button id="copyBtn">Copy</button>
+            <button id="downloadBtn" class="primary">Download</button>
+          </div>
+        </div>
+        <div class="body">
+          <textarea id="output" spellcheck="false"></textarea>
+          <p class="hint">譜面は1小節ごとにカンマ区切りで出力します。入力後もBPMやオフセットを変えると再クォンタイズされます。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast">Copied</div>
+
+  <script>
+    const audio = document.getElementById('audio');
+    const els = {
+      audioFile: document.getElementById('audioFile'),
+      bpm: document.getElementById('bpm'),
+      detectBpmBtn: document.getElementById('detectBpmBtn'),
+      offset: document.getElementById('offset'),
+      setFirstBeatBtn: document.getElementById('setFirstBeatBtn'),
+      meter: document.getElementById('meter'),
+      maxDiv: document.getElementById('maxDiv'),
+      mergeMs: document.getElementById('mergeMs'),
+      donSoundFile: document.getElementById('donSoundFile'),
+      kaSoundFile: document.getElementById('kaSoundFile'),
+      autoQuantize: document.getElementById('autoQuantize'),
+      quantizeNowBtn: document.getElementById('quantizeNowBtn'),
+      title: document.getElementById('title'),
+      playBtn: document.getElementById('playBtn'),
+      recBtn: document.getElementById('recBtn'),
+      stopBtn: document.getElementById('stopBtn'),
+      undoBtn: document.getElementById('undoBtn'),
+      clearBtn: document.getElementById('clearBtn'),
+      seek: document.getElementById('seek'),
+      time: document.getElementById('time'),
+      musicVolume: document.getElementById('musicVolume'),
+      musicVolumeValue: document.getElementById('musicVolumeValue'),
+      metronomeVolume: document.getElementById('metronomeVolume'),
+      metronomeVolumeValue: document.getElementById('metronomeVolumeValue'),
+      strip: document.getElementById('strip'),
+      waveform: document.getElementById('waveform'),
+      waveformCanvas: document.getElementById('waveformCanvas'),
+      waveformEmpty: document.getElementById('waveformEmpty'),
+      waveformZoom: document.getElementById('waveformZoom'),
+      waveformCenterBtn: document.getElementById('waveformCenterBtn'),
+      waveformScroll: document.getElementById('waveformScroll'),
+      output: document.getElementById('output'),
+      copyBtn: document.getElementById('copyBtn'),
+      downloadBtn: document.getElementById('downloadBtn'),
+      recDot: document.getElementById('recDot'),
+      statusText: document.getElementById('statusText'),
+      toast: document.getElementById('toast')
+    };
+
+    let notes = [];
+    let isRecording = false;
+    let rafId = 0;
+    let fileObjectUrl = '';
+    let loadedAudioFile = null;
+    let audioCtx = null;
+    const customHitBuffers = { don: null, ka: null };
+    let lastAuditionTime = 0;
+    let auditionArmed = false;
+    const playedAuditionNotes = new Set();
+    const playedMetronomeBeats = new Set();
+    const keyTypes = { d: 'ka', k: 'ka', f: 'don', j: 'don' };
+    const activeKeys = new Set();
+    let quantizeTimer = 0;
+    let dragState = null;
+    let laneDragState = null;
+    let waveformPeaks = [];
+    let waveformDuration = 0;
+    let waveformPointerActive = false;
+    let waveformCenterTime = 0;
+
+    function getSettings() {
+      const [beats, unit] = els.meter.value.split('/').map(Number);
+      return {
+        bpm: Number(els.bpm.value) || 120,
+        offset: Number(els.offset.value) || 0,
+        beats,
+        unit,
+        maxDiv: Number(els.maxDiv.value) || 16,
+        mergeWindow: (Number(els.mergeMs.value) || 28) / 1000
+      };
+    }
+
+    function beatLength(settings = getSettings()) {
+      return 60 / settings.bpm;
+    }
+
+    function measureBeats(settings = getSettings()) {
+      return settings.beats * (4 / settings.unit);
+    }
+
+    function quantizeTime(time, settings = getSettings()) {
+      const beat = beatLength(settings);
+      const relBeats = (time - settings.offset) / beat;
+      const mBeats = measureBeats(settings);
+      const division = settings.maxDiv;
+      const step = 4 / division;
+      const qBeat = Math.round(relBeats / step) * step;
+      const qTime = settings.offset + qBeat * beat;
+      const err = Math.abs(qTime - time);
+      const measure = Math.max(0, Math.floor(qBeat / mBeats));
+      const beatInMeasure = ((qBeat % mBeats) + mBeats) % mBeats;
+      return { qBeat, qTime, err, division, measure, beatInMeasure };
+    }
+
+    function noteCode(note) {
+      if (note.type === 'don') return note.big ? '3' : '1';
+      return note.big ? '4' : '2';
+    }
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function sliderVolume(el) {
+      return Math.max(0, Math.min(1, Number(el.value) || 0));
+    }
+
+    function syncVolumeControls() {
+      const musicVolume = sliderVolume(els.musicVolume);
+      const metronomeVolume = sliderVolume(els.metronomeVolume);
+      audio.volume = musicVolume;
+      els.musicVolumeValue.textContent = `${Math.round(musicVolume * 100)}%`;
+      els.metronomeVolumeValue.textContent = `${Math.round(metronomeVolume * 100)}%`;
+    }
+
+    async function loadCustomHitSound(type, file) {
+      if (!file) return;
+      const ctx = getAudioContext();
+      const arrayBuffer = await file.arrayBuffer();
+      customHitBuffers[type] = await ctx.decodeAudioData(arrayBuffer.slice(0));
+      showToast(`${type === 'don' ? 'Don' : 'Ka'} SE loaded`);
+    }
+
+    function playTaikoSound(type, big = false) {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+      const customBuffer = customHitBuffers[type];
+      if (customBuffer) {
+        const source = ctx.createBufferSource();
+        const gain = ctx.createGain();
+        source.buffer = customBuffer;
+        gain.gain.setValueAtTime(big ? 1.25 : 0.9, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + Math.min(0.45, customBuffer.duration || 0.2));
+        source.connect(gain);
+        gain.connect(ctx.destination);
+        source.start(now);
+        return;
+      }
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      const osc = ctx.createOscillator();
+      const noiseBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.09), ctx.sampleRate);
+      const noiseData = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < noiseData.length; i += 1) {
+        noiseData[i] = (Math.random() * 2 - 1) * (1 - i / noiseData.length);
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = noiseBuffer;
+
+      if (type === 'don') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(big ? 128 : 155, now);
+        osc.frequency.exponentialRampToValueAtTime(big ? 72 : 88, now + 0.09);
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(big ? 760 : 920, now);
+      } else {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(big ? 620 : 760, now);
+        osc.frequency.exponentialRampToValueAtTime(big ? 410 : 520, now + 0.055);
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(big ? 2100 : 2600, now);
+        filter.Q.setValueAtTime(1.8, now);
+      }
+
+      gain.gain.setValueAtTime(big ? 0.58 : 0.42, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + (type === 'don' ? 0.16 : 0.11));
+      osc.connect(gain);
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      noise.start(now);
+      osc.stop(now + 0.18);
+      noise.stop(now + 0.12);
+    }
+
+    function playMetronomeSound(isMeasure = false) {
+      const volume = sliderVolume(els.metronomeVolume);
+      if (volume <= 0) return;
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(isMeasure ? 1320 : 880, now);
+      gain.gain.setValueAtTime((isMeasure ? 0.28 : 0.18) * volume, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.055);
+    }
+
+    function resetAuditionPlayback() {
+      playedAuditionNotes.clear();
+      playedMetronomeBeats.clear();
+      lastAuditionTime = audio.currentTime || 0;
+      auditionArmed = !audio.paused;
+    }
+
+    function auditionNotes() {
+      if (audio.paused) {
+        auditionArmed = false;
+        return;
+      }
+      const current = audio.currentTime || 0;
+      const backwardsOrJumped = !auditionArmed || current < lastAuditionTime || current - lastAuditionTime > 0.35;
+      if (backwardsOrJumped) {
+        playedAuditionNotes.clear();
+        playedMetronomeBeats.clear();
+        lastAuditionTime = Math.max(0, current - 0.02);
+        auditionArmed = true;
+      }
+
+      const settings = getSettings();
+      const beat = beatLength(settings);
+      const mBeats = measureBeats(settings);
+      const firstBeat = Math.floor((lastAuditionTime - settings.offset) / beat) - 1;
+      const lastBeat = Math.ceil((current + 0.012 - settings.offset) / beat) + 1;
+      for (let beatIndex = firstBeat; beatIndex <= lastBeat; beatIndex += 1) {
+        const beatTime = settings.offset + beatIndex * beat;
+        const beatId = String(beatIndex);
+        if (playedMetronomeBeats.has(beatId)) continue;
+        if (beatTime > lastAuditionTime && beatTime <= current + 0.012) {
+          const beatInMeasure = ((beatIndex % mBeats) + mBeats) % mBeats;
+          playMetronomeSound(Math.abs(beatInMeasure) < 0.000001);
+          playedMetronomeBeats.add(beatId);
+        }
+      }
+
+      notes.forEach(note => {
+        if (playedAuditionNotes.has(note.id)) return;
+        if (note.qTime > lastAuditionTime && note.qTime <= current + 0.012) {
+          playTaikoSound(note.type, note.big);
+          playedAuditionNotes.add(note.id);
+        }
+      });
+      lastAuditionTime = current;
+    }
+
+    function addNote(type, rawTime, sourceKey) {
+      const settings = getSettings();
+      const q = quantizeTime(rawTime, settings);
+      const existing = notes.find(note => {
+        const nearTime = Math.abs(note.rawTime - rawTime) <= settings.mergeWindow;
+        const differentKey = !sourceKey || !(note.keys || []).includes(sourceKey);
+        return note.type === type && nearTime && differentKey;
+      });
+
+      if (existing) {
+        existing.big = true;
+        existing.keys = Array.from(new Set([...(existing.keys || []), sourceKey]));
+        existing.rawTime = Math.min(existing.rawTime, rawTime);
+        Object.assign(existing, quantizeTime(existing.rawTime, settings));
+      } else {
+        notes.push({
+          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+          type,
+          rawTime,
+          big: false,
+          keys: [sourceKey],
+          ...q
+        });
+      }
+      if (els.autoQuantize.checked) {
+        scheduleAutoQuantize();
+      } else {
+        sortAndRender();
+      }
+    }
+
+    function mergeQuantizedCollisions() {
+      const settings = getSettings();
+      const merged = [];
+      notes.forEach(note => {
+        const existing = merged.find(item => (
+          item.type === note.type &&
+          item.measure === note.measure &&
+          Math.abs(item.beatInMeasure - note.beatInMeasure) < 0.000001
+        ));
+        if (existing) {
+          const existingHitTime = Number.isFinite(existing.mergeSourceRawTime) ? existing.mergeSourceRawTime : existing.rawTime;
+          const noteHitTime = Number.isFinite(note.mergeSourceRawTime) ? note.mergeSourceRawTime : note.rawTime;
+          const nearTime = Math.abs(existingHitTime - noteHitTime) <= settings.mergeWindow;
+          const differentKey = (note.keys || []).some(key => !(existing.keys || []).includes(key));
+          existing.big = existing.big || note.big || (nearTime && differentKey);
+          existing.keys = Array.from(new Set([...(existing.keys || []), ...(note.keys || [])]));
+          existing.rawTime = Math.min(existing.rawTime, note.rawTime);
+          existing.mergeSourceRawTime = Math.min(existingHitTime, noteHitTime);
+          existing.qTime = Math.min(existing.qTime, note.qTime);
+        } else {
+          merged.push({ ...note });
+        }
+      });
+      merged.forEach(note => delete note.mergeSourceRawTime);
+      notes = merged;
+    }
+
+    function commitNoteToTime(note, time) {
+      note.rawTime = Math.max(0, time);
+      Object.assign(note, quantizeTime(note.rawTime));
+      note.rawTime = note.qTime;
+      Object.assign(note, quantizeTime(note.rawTime));
+    }
+
+    function timeFromStripX(clientX, atTime = audio.currentTime || 0) {
+      const rect = els.strip.getBoundingClientRect();
+      const pxPerSecond = 180;
+      const center = rect.width / 2;
+      return atTime + ((clientX - rect.left) - center) / pxPerSecond;
+    }
+
+    function requantizeAll({ commit = false, merge = false } = {}) {
+      const settings = getSettings();
+      notes = notes.map(note => {
+        const quantized = quantizeTime(note.rawTime, settings);
+        const rawTime = commit ? quantized.qTime : note.rawTime;
+        return {
+          ...note,
+          mergeSourceRawTime: commit && merge ? note.rawTime : undefined,
+          rawTime,
+          ...quantizeTime(rawTime, settings)
+        };
+      });
+      if (merge) mergeQuantizedCollisions();
+      sortAndRender();
+    }
+
+    function inferBestOffset() {
+      if (notes.length < 2) return null;
+      const settings = getSettings();
+      const beat = beatLength(settings);
+      const stepSeconds = beat * (4 / settings.maxDiv);
+      let best = null;
+
+      for (let ms = 0; ms < Math.round(beat * 1000); ms += 2) {
+        const offset = ms / 1000;
+        let total = 0;
+        notes.forEach(note => {
+          const rel = note.rawTime - offset;
+          const qTime = offset + Math.round(rel / stepSeconds) * stepSeconds;
+          const nearest = Math.abs(qTime - note.rawTime);
+          total += nearest * nearest;
+        });
+        const score = total / notes.length;
+        if (!best || score < best.score) best = { offset, score };
+      }
+
+      if (!best) return null;
+      const current = Number(els.offset.value) || 0;
+      const base = Math.floor(current / beat) * beat;
+      return base + best.offset;
+    }
+
+    function autoQuantizeNotes({ updateOffset = false, commit = false, silent = true } = {}) {
+      const timelineTime = audio.currentTime || 0;
+      if (updateOffset) {
+        const inferred = inferBestOffset();
+        if (inferred !== null && Number.isFinite(inferred)) {
+          els.offset.value = inferred.toFixed(3);
+        }
+      }
+      requantizeAll({ commit, merge: commit });
+      renderTimeline(timelineTime);
+      if (!silent) showToast('Quantized');
+    }
+
+    function scheduleAutoQuantize() {
+      if (!els.autoQuantize.checked) return;
+      window.clearTimeout(quantizeTimer);
+      quantizeTimer = window.setTimeout(() => autoQuantizeNotes({ updateOffset: false, commit: true }), 40);
+    }
+
+    function startNoteDrag(event, noteId) {
+      const note = notes.find(item => item.id === noteId);
+      if (!note) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const current = audio.currentTime || 0;
+      const rect = els.strip.getBoundingClientRect();
+      dragState = {
+        noteId,
+        startTime: note.rawTime,
+        timelineTime: current,
+        pointerId: event.pointerId,
+        minX: rect.left,
+        maxX: rect.right
+      };
+      event.currentTarget.classList.add('dragging');
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+
+    function moveNoteDrag(event) {
+      if (!dragState) return;
+      event.preventDefault();
+      const note = notes.find(item => item.id === dragState.noteId);
+      if (!note) return;
+      const x = Math.max(dragState.minX, Math.min(dragState.maxX, event.clientX));
+      const previewTime = Math.max(0, timeFromStripX(x, dragState.timelineTime));
+      Object.assign(note, quantizeTime(previewTime));
+      renderTimeline(dragState.timelineTime);
+      renderTable();
+      renderTja();
+    }
+
+    function endNoteDrag(event) {
+      if (!dragState) return;
+      event.preventDefault();
+      const note = notes.find(item => item.id === dragState.noteId);
+      if (note) {
+        commitNoteToTime(note, note.qTime);
+        mergeQuantizedCollisions();
+      }
+      dragState = null;
+      sortAndRender();
+    }
+
+    function clampTime(value) {
+      const duration = Number.isFinite(audio.duration) ? audio.duration : Infinity;
+      return Math.max(0, Math.min(duration, value));
+    }
+
+    function startLaneDrag(event) {
+      if (event.target.closest('.note') || event.button !== 0) return;
+      event.preventDefault();
+      cancelAnimationFrame(rafId);
+      audio.pause();
+      laneDragState = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startTime: audio.currentTime || 0
+      };
+      els.strip.classList.add('dragging-lane');
+      els.strip.setPointerCapture(event.pointerId);
+    }
+
+    function moveLaneDrag(event) {
+      if (!laneDragState) return;
+      event.preventDefault();
+      const pxPerSecond = 180;
+      const deltaSeconds = (event.clientX - laneDragState.startX) / pxPerSecond;
+      audio.currentTime = clampTime(laneDragState.startTime - deltaSeconds);
+      resetAuditionPlayback();
+      syncTimeline();
+    }
+
+    function endLaneDrag(event) {
+      if (!laneDragState) return;
+      event.preventDefault();
+      laneDragState = null;
+      els.strip.classList.remove('dragging-lane');
+      resetAuditionPlayback();
+      syncTimeline();
+    }
+
+    function normalizeBpm(value) {
+      let bpm = value;
+      while (bpm < 70) bpm *= 2;
+      while (bpm > 220) bpm /= 2;
+      return bpm;
+    }
+
+    function detectBpmFromNotes() {
+      const times = notes.map(note => note.rawTime).sort((a, b) => a - b);
+      if (times.length < 3) return null;
+      const scores = new Map();
+      for (let i = 0; i < times.length; i += 1) {
+        for (let j = i + 1; j < times.length; j += 1) {
+          const delta = times[j] - times[i];
+          if (delta < 0.18) continue;
+          if (delta > 3.2) break;
+          const bpm = normalizeBpm(60 / delta);
+          if (bpm < 70 || bpm > 220) continue;
+          const bucket = Math.round(bpm);
+          scores.set(bucket, (scores.get(bucket) || 0) + 1 / Math.max(1, j - i));
+        }
+      }
+      const best = Array.from(scores.entries()).sort((a, b) => b[1] - a[1])[0];
+      return best ? best[0] : null;
+    }
+
+    function pickBpmFromEnvelope(envelope, frameRate) {
+      if (envelope.length < frameRate * 4) return null;
+
+      const flux = envelope.map((value, index) => Math.max(0, value - (envelope[index - 1] || value)));
+      const smooth = flux.map((_, index) => {
+        let sum = 0;
+        let count = 0;
+        for (let i = -2; i <= 2; i += 1) {
+          const value = flux[index + i];
+          if (value === undefined) continue;
+          sum += value;
+          count += 1;
+        }
+        return sum / count;
+      });
+      const mean = smooth.reduce((sum, value) => sum + value, 0) / smooth.length;
+      const centered = smooth.map(value => Math.max(0, value - mean));
+      const energy = centered.reduce((sum, value) => sum + value * value, 0);
+      if (!energy) return null;
+
+      const minBpm = 70;
+      const maxBpm = 220;
+      const minLag = Math.floor(frameRate * 60 / maxBpm);
+      const maxLag = Math.ceil(frameRate * 60 / minBpm);
+      const candidates = [];
+
+      for (let lag = minLag; lag <= maxLag; lag += 1) {
+        let corr = 0;
+        let normA = 0;
+        let normB = 0;
+        for (let i = lag; i < centered.length; i += 1) {
+          const a = centered[i];
+          const b = centered[i - lag];
+          corr += a * b;
+          normA += a * a;
+          normB += b * b;
+        }
+        let score = corr / Math.sqrt(Math.max(0.000001, normA * normB));
+        [2, 3, 4].forEach(mult => {
+          const harmonicLag = lag * mult;
+          if (harmonicLag >= centered.length) return;
+          let harmonic = 0;
+          let hNormA = 0;
+          let hNormB = 0;
+          for (let i = harmonicLag; i < centered.length; i += 1) {
+            const a = centered[i];
+            const b = centered[i - harmonicLag];
+            harmonic += a * b;
+            hNormA += a * a;
+            hNormB += b * b;
+          }
+          score += (harmonic / Math.sqrt(Math.max(0.000001, hNormA * hNormB))) / (mult + 1);
+        });
+        const bpm = 60 * frameRate / lag;
+        const tempoPreference = bpm >= 110 ? 1 + Math.min(0.38, (bpm - 110) / 190) : 1;
+        candidates.push({ bpm, score: score * tempoPreference });
+      }
+
+      const localPeaks = candidates.filter((candidate, index) => {
+        const prev = candidates[index - 1];
+        const next = candidates[index + 1];
+        return (!prev || candidate.score >= prev.score) && (!next || candidate.score >= next.score);
+      }).sort((a, b) => b.score - a.score);
+      if (!localPeaks.length) return null;
+
+      const best = localPeaks[0];
+      const nearby = localPeaks.filter(candidate => Math.abs(candidate.bpm - best.bpm) <= 3 && candidate.score >= best.score * 0.8);
+      const refined = nearby.reduce((acc, candidate) => {
+        acc.sum += candidate.bpm * candidate.score;
+        acc.weight += candidate.score;
+        return acc;
+      }, { sum: 0, weight: 0 });
+      return refined.weight ? refined.sum / refined.weight : best.bpm;
+    }
+
+    async function detectBpmFromAudioFile(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+      if (ctx.close) ctx.close();
+
+      const sampleRate = audioBuffer.sampleRate;
+      const hop = 1024;
+      const frameCount = Math.floor(audioBuffer.length / hop);
+      const envelope = new Array(frameCount);
+      for (let frame = 0; frame < frameCount; frame += 1) {
+        const start = frame * hop;
+        let sum = 0;
+        for (let ch = 0; ch < audioBuffer.numberOfChannels; ch += 1) {
+          const data = audioBuffer.getChannelData(ch);
+          for (let i = 0; i < hop; i += 1) {
+            const sample = data[start + i] || 0;
+            sum += sample * sample;
+          }
+        }
+        envelope[frame] = Math.sqrt(sum / (hop * audioBuffer.numberOfChannels));
+      }
+      return pickBpmFromEnvelope(envelope, sampleRate / hop);
+    }
+
+    async function detectBpm() {
+      const previous = els.detectBpmBtn.textContent;
+      els.detectBpmBtn.disabled = true;
+      els.detectBpmBtn.textContent = 'Detecting...';
+      try {
+        const tappedBpm = detectBpmFromNotes();
+        const audioBpm = loadedAudioFile ? await detectBpmFromAudioFile(loadedAudioFile) : null;
+        const candidates = [audioBpm, tappedBpm].filter(Boolean);
+        if (!candidates.length) {
+          showToast('音源か3個以上の打鍵が必要です');
+          return;
+        }
+        const bpm = audioBpm && tappedBpm && Math.abs(audioBpm - tappedBpm) < 8
+          ? (audioBpm * 0.7 + tappedBpm * 0.3)
+          : (tappedBpm && notes.length >= 4 ? tappedBpm : candidates[0]);
+        els.bpm.value = bpm.toFixed(2);
+        autoQuantizeNotes({ updateOffset: false });
+        showToast(`BPM ${bpm.toFixed(2)}`);
+      } catch (error) {
+        console.error(error);
+        showToast('BPM検出に失敗しました');
+      } finally {
+        els.detectBpmBtn.disabled = false;
+        els.detectBpmBtn.textContent = previous;
+      }
+    }
+
+    function sortAndRender() {
+      notes.sort((a, b) => a.qBeat - b.qBeat || a.rawTime - b.rawTime || a.type.localeCompare(b.type));
+      renderTimeline();
+      renderTable();
+      renderTja();
+    }
+
+    function buildMeasureGrid() {
+      const settings = getSettings();
+      const mBeats = measureBeats(settings);
+      const maxMeasure = Math.max(0, ...notes.map(note => note.measure));
+      const measures = [];
+
+      for (let m = 0; m <= maxMeasure; m += 1) {
+        const measureNotes = notes.filter(note => note.measure === m);
+        const div = settings.maxDiv;
+        const slots = Math.max(1, Math.round(mBeats * div / 4));
+        const cells = Array(slots).fill('0');
+
+        measureNotes.forEach(note => {
+          const index = Math.round(note.beatInMeasure / (4 / div));
+          const safeIndex = Math.max(0, Math.min(slots - 1, index));
+          const current = cells[safeIndex];
+          const next = noteCode(note);
+          if (current === '0' || Number(next) > Number(current)) cells[safeIndex] = next;
+        });
+
+        measures.push(cells.join('') + ',');
+      }
+      return measures;
+    }
+
+    function renderTja() {
+      const settings = getSettings();
+      const lines = [
+        `TITLE:${els.title.value || 'Untitled'}`,
+        `BPM:${settings.bpm}`,
+        `OFFSET:${settings.offset}`,
+        'WAVE:',
+        'COURSE:Oni',
+        'LEVEL:1',
+        '#START',
+        ...buildMeasureGrid(),
+        '#END'
+      ];
+      els.output.value = lines.join('\n');
+    }
+
+    function renderTable() {
+      // Input history table removed; keep this as a no-op for shared render paths.
+    }
+
+    function renderTimeline(atTime = audio.currentTime || 0) {
+      els.strip.querySelectorAll('.note, .grid-line').forEach(el => el.remove());
+      const current = atTime || 0;
+      const pxPerSecond = 180;
+      const center = els.strip.clientWidth / 2;
+      const settings = getSettings();
+      const beatSeconds = beatLength(settings);
+      const mBeats = measureBeats(settings);
+      const leftTime = current - center / pxPerSecond;
+      const rightTime = current + center / pxPerSecond;
+      const stepsPerBeat = settings.maxDiv / 4;
+      const stepSeconds = beatSeconds / stepsPerBeat;
+      const firstStep = Math.floor((leftTime - settings.offset) / stepSeconds) - 1;
+      const lastStep = Math.ceil((rightTime - settings.offset) / stepSeconds) + 1;
+
+      for (let stepIndex = firstStep; stepIndex <= lastStep; stepIndex += 1) {
+        const time = settings.offset + stepIndex * stepSeconds;
+        const x = center + (time - current) * pxPerSecond;
+        if (x < -20 || x > els.strip.clientWidth + 20) continue;
+        const beatIndex = stepIndex / stepsPerBeat;
+        const beatInMeasure = ((beatIndex % mBeats) + mBeats) % mBeats;
+        const isBeat = stepIndex % stepsPerBeat === 0;
+        const isMeasure = isBeat && Math.abs(beatInMeasure) < 0.000001;
+        const line = document.createElement('div');
+        line.className = `grid-line ${isMeasure ? 'measure' : (isBeat ? 'beat' : 'subdivision')}`;
+        line.style.left = `${x}px`;
+        if (isMeasure) {
+          const measureNumber = Math.floor(beatIndex / mBeats) + 1;
+          const label = document.createElement('span');
+          label.className = 'measure-label';
+          label.textContent = measureNumber > 0 ? String(measureNumber) : '';
+          line.appendChild(label);
+        }
+        els.strip.appendChild(line);
+      }
+
+      notes.forEach(note => {
+        if (dragState && dragState.noteId === note.id) return;
+        const x = center + (note.qTime - current) * pxPerSecond;
+        if (x < -30 || x > els.strip.clientWidth + 30) return;
+        const el = document.createElement('div');
+        el.className = `note ${note.type} ${note.big ? 'big' : ''}`;
+        el.dataset.noteId = note.id;
+        el.style.left = `${x}px`;
+        el.title = `${note.type} ${note.rawTime.toFixed(3)}s -> ${note.qTime.toFixed(3)}s`;
+        el.addEventListener('pointerdown', event => startNoteDrag(event, note.id));
+        els.strip.appendChild(el);
+      });
+
+      if (dragState) {
+        const note = notes.find(item => item.id === dragState.noteId);
+        if (note) {
+          const x = center + (note.qTime - current) * pxPerSecond;
+          const el = document.createElement('div');
+          el.className = `note ${note.type} ${note.big ? 'big' : ''} dragging`;
+          el.dataset.noteId = note.id;
+          el.style.left = `${x}px`;
+          el.title = `${note.type} ${note.rawTime.toFixed(3)}s -> ${note.qTime.toFixed(3)}s`;
+          el.addEventListener('pointerdown', event => startNoteDrag(event, note.id));
+          els.strip.appendChild(el);
+        }
+      }
+    }
+
+    function setRecording(next) {
+      isRecording = next;
+      els.recDot.classList.toggle('live', isRecording);
+      els.statusText.textContent = isRecording ? '録音中' : (audio.paused ? '待機中' : '再生中');
+      els.recBtn.textContent = isRecording ? 'Recording' : 'Record';
+    }
+
+    function play() {
+      cancelAnimationFrame(rafId);
+      audio.play();
+      getAudioContext();
+      resetAuditionPlayback();
+      els.statusText.textContent = isRecording ? '録音中' : '再生中';
+      tick();
+    }
+
+    function stop() {
+      audio.pause();
+      setRecording(false);
+      els.statusText.textContent = '停止';
+    }
+
+    function formatTime(value) {
+      if (!Number.isFinite(value)) value = 0;
+      const min = Math.floor(value / 60);
+      const sec = Math.floor(value % 60);
+      const ms = Math.floor((value % 1) * 1000);
+      return `${min}:${String(sec).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+    }
+
+    function syncTimeline({ audition = false } = {}) {
+      const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+      const ratio = duration ? Math.max(0, Math.min(1000, (audio.currentTime / duration) * 1000)) : 0;
+      els.seek.value = String(ratio);
+      els.time.textContent = `${formatTime(audio.currentTime)} / ${formatTime(duration)}`;
+      if (audition) auditionNotes();
+      renderTimeline();
+      drawWaveform();
+    }
+
+    function tick() {
+      syncTimeline({ audition: true });
+      if (!audio.paused) rafId = requestAnimationFrame(tick);
+    }
+
+    function flashKey(key) {
+      const el = document.querySelector(`.key[data-key="${key}"]`);
+      if (!el) return;
+      el.classList.add('active');
+      window.setTimeout(() => el.classList.remove('active'), 90);
+    }
+
+    function showToast(text) {
+      els.toast.textContent = text;
+      els.toast.classList.add('show');
+      window.setTimeout(() => els.toast.classList.remove('show'), 1200);
+    }
+
+    function buildWaveformPeaks(audioBuffer) {
+      const channelData = [];
+      for (let ch = 0; ch < audioBuffer.numberOfChannels; ch += 1) {
+        channelData.push(audioBuffer.getChannelData(ch));
+      }
+      const targetBuckets = Math.min(audioBuffer.length, Math.min(140000, Math.max(12000, Math.ceil(audioBuffer.duration * 720))));
+      const step = Math.max(1, Math.ceil(audioBuffer.length / targetBuckets));
+      const peaks = [];
+      for (let start = 0; start < audioBuffer.length; start += step) {
+        const end = Math.min(audioBuffer.length, start + step);
+        let min = 1;
+        let max = -1;
+        for (let i = start; i < end; i += 1) {
+          let sample = 0;
+          channelData.forEach(data => {
+            sample += data[i] || 0;
+          });
+          sample /= channelData.length;
+          min = Math.min(min, sample);
+          max = Math.max(max, sample);
+        }
+        peaks.push({ min, max });
+      }
+      return peaks;
+    }
+
+    async function loadWaveform(file) {
+      waveformPeaks = [];
+      waveformDuration = 0;
+      waveformCenterTime = 0;
+      els.waveformEmpty.style.display = 'grid';
+      drawWaveform();
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+        if (ctx.close) ctx.close();
+        waveformPeaks = buildWaveformPeaks(audioBuffer);
+        waveformDuration = audioBuffer.duration;
+        waveformCenterTime = waveformDuration / 2;
+        els.waveformEmpty.style.display = 'none';
+        drawWaveform();
+      } catch (error) {
+        console.error(error);
+        els.waveformEmpty.textContent = 'Waveform could not be rendered.';
+      }
+    }
+
+    function getWaveformRange() {
+      if (!waveformDuration) return { start: 0, end: 0, duration: 0, zoom: 1 };
+      const zoom = Number(els.waveformZoom.value) || 1;
+      const visibleDuration = waveformDuration / zoom;
+      const center = Math.max(visibleDuration / 2, Math.min(waveformDuration - visibleDuration / 2, waveformCenterTime || audio.currentTime || 0));
+      const start = Math.max(0, Math.min(waveformDuration - visibleDuration, center - visibleDuration / 2));
+      return { start, end: start + visibleDuration, duration: visibleDuration, zoom };
+    }
+
+    function updateWaveformScroll() {
+      if (!waveformDuration) {
+        els.waveformScroll.disabled = true;
+        els.waveformScroll.value = '0';
+        return;
+      }
+      const range = getWaveformRange();
+      const maxStart = Math.max(0, waveformDuration - range.duration);
+      els.waveformScroll.disabled = maxStart <= 0.000001;
+      els.waveformScroll.value = maxStart ? String(Math.round((range.start / maxStart) * 1000)) : '0';
+    }
+
+    function waveformTimeToX(time, width) {
+      const range = getWaveformRange();
+      if (!range.duration) return 0;
+      return ((time - range.start) / range.duration) * width;
+    }
+
+    function waveformSampleAt(time) {
+      if (!waveformPeaks.length || !waveformDuration) return { min: 0, max: 0 };
+      const position = Math.max(0, Math.min(waveformPeaks.length - 1, (time / waveformDuration) * (waveformPeaks.length - 1)));
+      const left = Math.floor(position);
+      const right = Math.min(waveformPeaks.length - 1, left + 1);
+      const mix = position - left;
+      const a = waveformPeaks[left];
+      const b = waveformPeaks[right];
+      return {
+        min: a.min + (b.min - a.min) * mix,
+        max: a.max + (b.max - a.max) * mix
+      };
+    }
+
+    function drawWaveform() {
+      const canvas = els.waveformCanvas;
+      const rect = els.waveform.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const width = Math.max(1, Math.floor(rect.width * dpr));
+      const height = Math.max(1, Math.floor(rect.height * dpr));
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = '#0d1015';
+      ctx.fillRect(0, 0, width, height);
+      const mid = height / 2;
+      ctx.strokeStyle = 'rgba(255,255,255,.08)';
+      ctx.beginPath();
+      ctx.moveTo(0, mid);
+      ctx.lineTo(width, mid);
+      ctx.stroke();
+
+      if (waveformPeaks.length && waveformDuration) {
+        const range = getWaveformRange();
+        const topPoints = [];
+        const bottomPoints = [];
+        const xStep = Math.max(0.5, dpr / 2);
+        for (let x = 0; x <= width; x += xStep) {
+          const time = range.start + (x / width) * range.duration;
+          const sample = waveformSampleAt(time);
+          const top = mid - Math.max(0.5, sample.max * height * 0.43);
+          const bottom = mid - Math.min(-0.5, sample.min * height * 0.43);
+          topPoints.push([x, top]);
+          bottomPoints.push([x, bottom]);
+        }
+        ctx.beginPath();
+        topPoints.forEach(([x, y], index) => {
+          if (index === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        for (let i = bottomPoints.length - 1; i >= 0; i -= 1) {
+          ctx.lineTo(bottomPoints[i][0], bottomPoints[i][1]);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(85, 167, 255, .56)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(151, 210, 255, .72)';
+        ctx.lineWidth = Math.max(1, dpr);
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+
+        const offset = Number(els.offset.value) || 0;
+        const offsetX = waveformTimeToX(offset, width);
+        if (offsetX >= 0 && offsetX <= width) {
+          ctx.fillStyle = 'rgba(45, 212, 191, .94)';
+          ctx.fillRect(offsetX - 1.5, 0, 3, height);
+          ctx.fillStyle = 'rgba(45, 212, 191, .18)';
+          ctx.fillRect(Math.max(0, offsetX - 5), 0, 10, height);
+        }
+
+        const current = audio.currentTime || 0;
+        const playX = waveformTimeToX(current, width);
+        if (playX >= 0 && playX <= width) {
+          ctx.fillStyle = 'rgba(255, 209, 102, .9)';
+          ctx.fillRect(playX - 1, 0, 2, height);
+        }
+      }
+      updateWaveformScroll();
+    }
+
+    function setFirstBeatAtTime(time, { silent = false } = {}) {
+      els.offset.value = time.toFixed(3);
+      resetAuditionPlayback();
+      requantizeAll({ commit: els.autoQuantize.checked, merge: els.autoQuantize.checked });
+      syncTimeline();
+      if (!silent) showToast(`1st beat ${time.toFixed(3)}s`);
+    }
+
+    function setFirstBeatAtCurrentTime() {
+      setFirstBeatAtTime(audio.currentTime || 0);
+    }
+
+    els.audioFile.addEventListener('change', event => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      loadedAudioFile = file;
+      if (fileObjectUrl) URL.revokeObjectURL(fileObjectUrl);
+      fileObjectUrl = URL.createObjectURL(file);
+      audio.src = fileObjectUrl;
+      els.title.value = file.name.replace(/\.[^.]+$/, '');
+      audio.currentTime = 0;
+      resetAuditionPlayback();
+      renderTja();
+      syncTimeline();
+      loadWaveform(file);
+    });
+    els.donSoundFile.addEventListener('change', event => loadCustomHitSound('don', event.target.files && event.target.files[0]));
+    els.kaSoundFile.addEventListener('change', event => loadCustomHitSound('ka', event.target.files && event.target.files[0]));
+    els.musicVolume.addEventListener('input', syncVolumeControls);
+    els.metronomeVolume.addEventListener('input', syncVolumeControls);
+
+    els.playBtn.addEventListener('click', play);
+    els.stopBtn.addEventListener('click', stop);
+    els.recBtn.addEventListener('click', () => {
+      setRecording(!isRecording);
+      if (isRecording && audio.paused) play();
+    });
+    els.detectBpmBtn.addEventListener('click', detectBpm);
+    els.setFirstBeatBtn.addEventListener('click', setFirstBeatAtCurrentTime);
+    els.quantizeNowBtn.addEventListener('click', () => autoQuantizeNotes({ updateOffset: false, commit: true, silent: false }));
+
+    function setFirstBeatFromWaveformPointer(event) {
+      if (!waveformDuration) return;
+      const rect = els.waveform.getBoundingClientRect();
+      const x = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+      const range = getWaveformRange();
+      setFirstBeatAtTime(range.start + (x / rect.width) * range.duration, { silent: waveformPointerActive });
+    }
+
+    function setWaveformZoom(nextZoom, anchorTime = audio.currentTime || waveformCenterTime || waveformDuration / 2) {
+      const allowed = [1, 2, 4, 8, 16, 32];
+      const zoom = allowed.reduce((best, value) => Math.abs(value - nextZoom) < Math.abs(best - nextZoom) ? value : best, allowed[0]);
+      els.waveformZoom.value = String(zoom);
+      waveformCenterTime = Math.max(0, Math.min(waveformDuration || 0, anchorTime));
+      drawWaveform();
+    }
+
+    els.waveform.addEventListener('pointerdown', event => {
+      if (event.target.closest('.waveform-controls')) return;
+      waveformPointerActive = true;
+      els.waveform.setPointerCapture(event.pointerId);
+      setFirstBeatFromWaveformPointer(event);
+    });
+    els.waveform.addEventListener('pointermove', event => {
+      if (waveformPointerActive) setFirstBeatFromWaveformPointer(event);
+    });
+    els.waveform.addEventListener('pointerup', () => {
+      waveformPointerActive = false;
+      showToast(`1st beat ${(Number(els.offset.value) || 0).toFixed(3)}s`);
+    });
+    els.waveform.addEventListener('pointercancel', () => {
+      waveformPointerActive = false;
+    });
+    els.waveform.addEventListener('wheel', event => {
+      if (!event.ctrlKey && !event.metaKey) return;
+      event.preventDefault();
+      if (!waveformDuration) return;
+      const currentZoom = Number(els.waveformZoom.value) || 1;
+      const nextZoom = event.deltaY < 0 ? currentZoom * 2 : currentZoom / 2;
+      const rect = els.waveform.getBoundingClientRect();
+      const range = getWaveformRange();
+      const x = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+      const anchorTime = range.start + (x / rect.width) * range.duration;
+      setWaveformZoom(nextZoom, anchorTime);
+    }, { passive: false });
+    els.waveformZoom.addEventListener('change', () => {
+      waveformCenterTime = audio.currentTime || waveformCenterTime || waveformDuration / 2;
+      drawWaveform();
+    });
+    els.waveformCenterBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      waveformCenterTime = audio.currentTime || 0;
+      drawWaveform();
+    });
+    els.waveformScroll.addEventListener('input', () => {
+      if (!waveformDuration) return;
+      const zoom = Number(els.waveformZoom.value) || 1;
+      const visibleDuration = waveformDuration / zoom;
+      const maxStart = Math.max(0, waveformDuration - visibleDuration);
+      const start = maxStart * (Number(els.waveformScroll.value) / 1000);
+      waveformCenterTime = start + visibleDuration / 2;
+      drawWaveform();
+    });
+    window.addEventListener('resize', drawWaveform);
+
+    els.seek.addEventListener('input', () => {
+      const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+      audio.currentTime = duration * (Number(els.seek.value) / 1000);
+      resetAuditionPlayback();
+      syncTimeline();
+    });
+
+    audio.addEventListener('loadedmetadata', () => {
+      audio.currentTime = 0;
+      resetAuditionPlayback();
+      syncTimeline();
+    });
+    audio.addEventListener('seeked', () => {
+      resetAuditionPlayback();
+      syncTimeline();
+    });
+    audio.addEventListener('pause', () => {
+      cancelAnimationFrame(rafId);
+      auditionArmed = false;
+      syncTimeline();
+      if (!isRecording) els.statusText.textContent = '待機中';
+    });
+    audio.addEventListener('ended', () => {
+      audio.pause();
+      cancelAnimationFrame(rafId);
+      setRecording(false);
+      audio.currentTime = 0;
+      resetAuditionPlayback();
+      syncTimeline();
+    });
+
+    document.addEventListener('keydown', event => {
+      const key = event.key.toLowerCase();
+      if (event.repeat || !keyTypes[key]) return;
+      activeKeys.add(key);
+      flashKey(key);
+      if (isRecording) addNote(keyTypes[key], audio.currentTime, key);
+    });
+
+    document.addEventListener('keyup', event => {
+      activeKeys.delete(event.key.toLowerCase());
+    });
+
+    document.addEventListener('pointermove', moveNoteDrag);
+    document.addEventListener('pointerup', endNoteDrag);
+    document.addEventListener('pointercancel', endNoteDrag);
+    els.strip.addEventListener('pointerdown', startLaneDrag);
+    document.addEventListener('pointermove', moveLaneDrag);
+    document.addEventListener('pointerup', endLaneDrag);
+    document.addEventListener('pointercancel', endLaneDrag);
+
+    document.querySelectorAll('.key').forEach(keyEl => {
+      keyEl.addEventListener('pointerdown', () => {
+        const key = keyEl.dataset.key;
+        flashKey(key);
+        if (isRecording) addNote(keyTypes[key], audio.currentTime, key);
+      });
+    });
+
+    [els.bpm, els.offset, els.meter, els.maxDiv, els.title].forEach(el => {
+      el.addEventListener('input', requantizeAll);
+      el.addEventListener('change', requantizeAll);
+    });
+
+    els.undoBtn.addEventListener('click', () => {
+      notes.pop();
+      sortAndRender();
+    });
+
+    els.clearBtn.addEventListener('click', () => {
+      if (!notes.length || confirm('全ての音符を消しますか？')) {
+        notes = [];
+        sortAndRender();
+      }
+    });
+
+    els.copyBtn.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(els.output.value);
+      showToast('Copied');
+    });
+
+    els.downloadBtn.addEventListener('click', () => {
+      const blob = new Blob([els.output.value], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(els.title.value || 'chart').replace(/[\\/:*?"<>|]/g, '_')}.tja`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    syncVolumeControls();
+    sortAndRender();
+    tick();
+  </script>
+</body>
+</html>
