@@ -820,11 +820,23 @@
       const division = settings.maxDiv;
       const step = 4 / division;
       const qBeat = Math.round(relBeats / step) * step;
+      return quantizeBeat(qBeat, time, settings);
+    }
+
+    function quantizeBeat(qBeat, sourceTime = null, settings = getSettings()) {
+      const beat = beatLength(settings);
+      const mBeats = measureBeats(settings);
+      const division = settings.maxDiv;
       const qTime = settings.offset + qBeat * beat;
-      const err = Math.abs(qTime - time);
+      const err = sourceTime === null ? 0 : Math.abs(qTime - sourceTime);
       const measure = Math.max(0, Math.floor(qBeat / mBeats));
       const beatInMeasure = ((qBeat % mBeats) + mBeats) % mBeats;
       return { qBeat, qTime, err, division, measure, beatInMeasure };
+    }
+
+    function nextGridAfter(note, settings = getSettings()) {
+      const step = 4 / settings.maxDiv;
+      return quantizeBeat(note.qBeat + step, note.rawTime, settings);
     }
 
     function noteCode(note) {
@@ -979,7 +991,7 @@
 
     function addNote(type, rawTime, sourceKey) {
       const settings = getSettings();
-      const q = quantizeTime(rawTime, settings);
+      let q = quantizeTime(rawTime, settings);
       const existing = notes.find(note => {
         const nearTime = Math.abs(note.rawTime - rawTime) <= settings.mergeWindow;
         const differentKey = !sourceKey || !(note.keys || []).includes(sourceKey);
@@ -992,10 +1004,16 @@
         existing.rawTime = Math.min(existing.rawTime, rawTime);
         Object.assign(existing, quantizeTime(existing.rawTime, settings));
       } else {
+        const previous = notes
+          .filter(note => note.rawTime <= rawTime)
+          .sort((a, b) => b.rawTime - a.rawTime)[0];
+        if (previous && q.qBeat <= previous.qBeat) {
+          q = nextGridAfter(previous, settings);
+        }
         notes.push({
           id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
           type,
-          rawTime,
+          rawTime: els.autoQuantize.checked ? q.qTime : rawTime,
           big: false,
           keys: [sourceKey],
           ...q
