@@ -786,6 +786,7 @@
     const keyTypes = { d: 'ka', k: 'ka', f: 'don', j: 'don' };
     const activeKeys = new Set();
     let quantizeTimer = 0;
+    let renderTimer = 0;
     let dragState = null;
     let laneDragState = null;
     let waveformPeaks = [];
@@ -1004,9 +1005,12 @@
         existing.rawTime = Math.min(existing.rawTime, rawTime);
         Object.assign(existing, quantizeTime(existing.rawTime, settings));
       } else {
-        const previous = notes
-          .filter(note => note.rawTime <= rawTime)
-          .sort((a, b) => b.rawTime - a.rawTime)[0];
+        let previous = null;
+        notes.forEach(note => {
+          if (note.rawTime <= rawTime && (!previous || note.rawTime > previous.rawTime)) {
+            previous = note;
+          }
+        });
         if (previous && q.qBeat <= previous.qBeat) {
           q = nextGridAfter(previous, settings);
         }
@@ -1019,22 +1023,17 @@
           ...q
         });
       }
-      if (els.autoQuantize.checked) {
-        scheduleAutoQuantize();
-      } else {
-        sortAndRender();
-      }
+      scheduleRender();
+      if (els.autoQuantize.checked) scheduleAutoQuantize();
     }
 
     function mergeQuantizedCollisions() {
       const settings = getSettings();
       const merged = [];
+      const bySlot = new Map();
       notes.forEach(note => {
-        const existing = merged.find(item => (
-          item.type === note.type &&
-          item.measure === note.measure &&
-          Math.abs(item.beatInMeasure - note.beatInMeasure) < 0.000001
-        ));
+        const key = `${note.type}:${note.measure}:${Math.round(note.beatInMeasure * 1000000)}`;
+        const existing = bySlot.get(key);
         if (existing) {
           const existingHitTime = Number.isFinite(existing.mergeSourceRawTime) ? existing.mergeSourceRawTime : existing.rawTime;
           const noteHitTime = Number.isFinite(note.mergeSourceRawTime) ? note.mergeSourceRawTime : note.rawTime;
@@ -1046,7 +1045,9 @@
           existing.mergeSourceRawTime = Math.min(existingHitTime, noteHitTime);
           existing.qTime = Math.min(existing.qTime, note.qTime);
         } else {
-          merged.push({ ...note });
+          const copy = { ...note };
+          bySlot.set(key, copy);
+          merged.push(copy);
         }
       });
       merged.forEach(note => delete note.mergeSourceRawTime);
@@ -1126,6 +1127,14 @@
       if (!els.autoQuantize.checked) return;
       window.clearTimeout(quantizeTimer);
       quantizeTimer = window.setTimeout(() => autoQuantizeNotes({ updateOffset: false, commit: true }), 40);
+    }
+
+    function scheduleRender() {
+      if (renderTimer) return;
+      renderTimer = requestAnimationFrame(() => {
+        renderTimer = 0;
+        sortAndRender();
+      });
     }
 
     function startNoteDrag(event, noteId) {
@@ -1833,7 +1842,8 @@
 
     document.addEventListener('keydown', event => {
       const key = event.key.toLowerCase();
-      if (event.repeat || !keyTypes[key]) return;
+      if (!keyTypes[key]) return;
+      if (event.repeat && activeKeys.has(key)) return;
       activeKeys.add(key);
       flashKey(key);
       if (isRecording) addNote(keyTypes[key], audio.currentTime, key);
