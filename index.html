@@ -631,7 +631,7 @@
             </label>
             <label>
               <span>大音符判定ms</span>
-              <input id="mergeMs" type="number" min="5" max="120" step="1" value="28">
+              <input id="mergeMs" type="number" min="5" max="120" step="1" value="10">
             </label>
             <label>
               <span>Don SE</span>
@@ -801,7 +801,7 @@
         beats,
         unit,
         maxDiv: Number(els.maxDiv.value) || 16,
-        mergeWindow: (Number(els.mergeMs.value) || 28) / 1000
+        mergeWindow: (Number(els.mergeMs.value) || 10) / 1000
       };
     }
 
