@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8">
@@ -574,24 +574,24 @@
     <header>
       <div>
         <h1>TJA Tap Chart Maker</h1>
-        <div class="subtitle">曲を読み込み、再生に合わせてDFJKを叩くと、BPMと拍位置から近い音価へ自動クォンタイズしてTJA譜面を生成します。</div>
+        <div class="subtitle">譖ｲ繧定ｪｭ縺ｿ霎ｼ縺ｿ縲∝・逕溘↓蜷医ｏ縺帙※DFJK繧貞娼縺上→縲。PM縺ｨ諡堺ｽ咲ｽｮ縺九ｉ霑代＞髻ｳ萓｡縺ｸ閾ｪ蜍輔け繧ｩ繝ｳ繧ｿ繧､繧ｺ縺励※TJA隴憺擇繧堤函謌舌＠縺ｾ縺吶・/div>
       </div>
-      <div class="status"><span id="recDot" class="dot"></span><span id="statusText">待機中</span></div>
+      <div class="status"><span id="recDot" class="dot"></span><span id="statusText">蠕・ｩ滉ｸｭ</span></div>
     </header>
 
     <section class="layout">
       <div class="panel">
         <div class="head">
-          <h2>録音</h2>
+          <h2>骭ｲ髻ｳ</h2>
           <div class="actions">
-            <button id="undoBtn" title="最後の音符を消す">Undo</button>
-            <button id="clearBtn" class="danger" title="全音符を消す">Clear</button>
+            <button id="undoBtn" title="譛蠕後・髻ｳ隨ｦ繧呈ｶ医☆">Undo</button>
+            <button id="clearBtn" class="danger" title="蜈ｨ髻ｳ隨ｦ繧呈ｶ医☆">Clear</button>
           </div>
         </div>
         <div class="body">
           <div class="grid">
             <label class="wide">
-              <span>音源</span>
+              <span>髻ｳ貅・/span>
               <input id="audioFile" type="file" accept="audio/*">
             </label>
             <label>
@@ -599,19 +599,19 @@
               <input id="bpm" type="number" min="20" max="400" step="0.01" value="120">
             </label>
             <label>
-              <span>自動検出</span>
+              <span>閾ｪ蜍墓､懷・</span>
               <button id="detectBpmBtn" type="button">Detect BPM</button>
             </label>
             <label>
-              <span>オフセット秒</span>
+              <span>繧ｪ繝輔そ繝・ヨ遘・/span>
               <input id="offset" type="number" step="0.001" value="0">
             </label>
             <label>
-              <span>1拍目</span>
+              <span>1諡咲岼</span>
               <button id="setFirstBeatBtn" type="button">Set 1st Beat</button>
             </label>
             <label>
-              <span>拍子</span>
+              <span>諡榊ｭ・/span>
               <select id="meter">
                 <option value="4/4">4/4</option>
                 <option value="3/4">3/4</option>
@@ -620,17 +620,17 @@
               </select>
             </label>
             <label>
-              <span>クォンタイズ単位</span>
+              <span>繧ｯ繧ｩ繝ｳ繧ｿ繧､繧ｺ蜊倅ｽ・/span>
               <select id="maxDiv">
                 <option value="8">8th</option>
-                <option value="16">16分</option>
-                <option value="24">24分</option>
-                <option value="32">32分</option>
-                <option value="48">48分</option>
+                <option value="16" selected>16蛻・/option>
+                <option value="24">24蛻・/option>
+                <option value="32">32蛻・/option>
+                <option value="48">48蛻・/option>
               </select>
             </label>
             <label>
-              <span>大音符判定ms</span>
+              <span>螟ｧ髻ｳ隨ｦ蛻､螳嗄s</span>
               <input id="mergeMs" type="number" min="5" max="120" step="1" value="10">
             </label>
             <label>
@@ -642,15 +642,15 @@
               <input id="kaSoundFile" type="file" accept="audio/*">
             </label>
             <label>
-              <span>クォンタイズ</span>
+              <span>繧ｯ繧ｩ繝ｳ繧ｿ繧､繧ｺ</span>
               <span class="toggle"><input id="autoQuantize" type="checkbox" checked>Auto</span>
             </label>
             <label>
-              <span>再クォンタイズ</span>
+              <span>蜀阪け繧ｩ繝ｳ繧ｿ繧､繧ｺ</span>
               <button id="quantizeNowBtn" type="button">Quantize Now</button>
             </label>
             <label>
-              <span>曲名</span>
+              <span>譖ｲ蜷・/span>
               <input id="title" value="Untitled">
             </label>
           </div>
@@ -685,7 +685,7 @@
                 <option value="2">2x</option>
                 <option value="4">4x</option>
                 <option value="8">8x</option>
-                <option value="16">16x</option>
+                <option value="16" selected>16x</option>
                 <option value="32">32x</option>
               </select>
               <button id="waveformCenterBtn" type="button" title="Center waveform on playhead">Center</button>
@@ -694,7 +694,7 @@
           </div>
           <input id="waveformScroll" class="waveform-scroll" type="range" min="0" max="1000" value="500" disabled title="Move zoomed waveform view">
 
-          <div class="keys" aria-label="入力キー">
+          <div class="keys" aria-label="蜈･蜉帙く繝ｼ">
             <div class="key" data-key="d"><b>D</b><small>Ka left</small></div>
             <div class="key" data-key="f"><b>F</b><small>Don left</small></div>
             <div class="key" data-key="j"><b>J</b><small>Don right</small></div>
@@ -705,16 +705,16 @@
             <div class="playhead"></div>
           </div>
           <div class="legend">
-            <span class="pill"><span class="swatch" style="background: var(--red)"></span>ドン 1</span>
-            <span class="pill"><span class="swatch" style="background: var(--blue)"></span>カッ 2</span>
-            <span class="pill"><span class="swatch" style="background: var(--yellow)"></span>両手入力は大音符 3/4</span>
+            <span class="pill"><span class="swatch" style="background: var(--red)"></span>繝峨Φ 1</span>
+            <span class="pill"><span class="swatch" style="background: var(--blue)"></span>繧ｫ繝・2</span>
+            <span class="pill"><span class="swatch" style="background: var(--yellow)"></span>荳｡謇句・蜉帙・螟ｧ髻ｳ隨ｦ 3/4</span>
           </div>
         </div>
       </div>
 
       <div class="panel">
         <div class="head">
-          <h2>TJA出力</h2>
+          <h2>TJA蜃ｺ蜉・/h2>
           <div class="actions">
             <button id="copyBtn">Copy</button>
             <button id="downloadBtn" class="primary">Download</button>
@@ -722,7 +722,7 @@
         </div>
         <div class="body">
           <textarea id="output" spellcheck="false"></textarea>
-          <p class="hint">譜面は1小節ごとにカンマ区切りで出力します。入力後もBPMやオフセットを変えると再クォンタイズされます。</p>
+          <p class="hint">隴憺擇縺ｯ1蟆冗ｯ縺斐→縺ｫ繧ｫ繝ｳ繝槫玄蛻・ｊ縺ｧ蜃ｺ蜉帙＠縺ｾ縺吶ょ・蜉帛ｾ後ｂBPM繧・が繝輔そ繝・ヨ繧貞､峨∴繧九→蜀阪け繧ｩ繝ｳ繧ｿ繧､繧ｺ縺輔ｌ縺ｾ縺吶・/p>
         </div>
       </div>
     </section>
@@ -1345,7 +1345,7 @@
         const audioBpm = loadedAudioFile ? await detectBpmFromAudioFile(loadedAudioFile) : null;
         const candidates = [audioBpm, tappedBpm].filter(Boolean);
         if (!candidates.length) {
-          showToast('音源か3個以上の打鍵が必要です');
+          showToast('Need at least 3 seconds of audio');
           return;
         }
         const bpm = audioBpm && tappedBpm && Math.abs(audioBpm - tappedBpm) < 8
@@ -1356,7 +1356,7 @@
         showToast(`BPM ${bpm.toFixed(2)}`);
       } catch (error) {
         console.error(error);
-        showToast('BPM検出に失敗しました');
+        showToast('BPM讀懷・縺ｫ螟ｱ謨励＠縺ｾ縺励◆');
       } finally {
         els.detectBpmBtn.disabled = false;
         els.detectBpmBtn.textContent = previous;
@@ -1482,7 +1482,7 @@
     function setRecording(next) {
       isRecording = next;
       els.recDot.classList.toggle('live', isRecording);
-      els.statusText.textContent = isRecording ? '録音中' : (audio.paused ? '待機中' : '再生中');
+      els.statusText.textContent = isRecording ? '骭ｲ髻ｳ荳ｭ' : (audio.paused ? '蠕・ｩ滉ｸｭ' : '蜀咲函荳ｭ');
       els.recBtn.textContent = isRecording ? 'Recording' : 'Record';
     }
 
@@ -1491,14 +1491,14 @@
       audio.play();
       getAudioContext();
       resetAuditionPlayback();
-      els.statusText.textContent = isRecording ? '録音中' : '再生中';
+      els.statusText.textContent = isRecording ? '骭ｲ髻ｳ荳ｭ' : '蜀咲函荳ｭ';
       tick();
     }
 
     function stop() {
       audio.pause();
       setRecording(false);
-      els.statusText.textContent = '停止';
+      els.statusText.textContent = '蛛懈ｭ｢';
     }
 
     function formatTime(value) {
@@ -1820,7 +1820,7 @@
       cancelAnimationFrame(rafId);
       auditionArmed = false;
       syncTimeline();
-      if (!isRecording) els.statusText.textContent = '待機中';
+      if (!isRecording) els.statusText.textContent = '蠕・ｩ滉ｸｭ';
     });
     audio.addEventListener('ended', () => {
       audio.pause();
@@ -1870,7 +1870,7 @@
     });
 
     els.clearBtn.addEventListener('click', () => {
-      if (!notes.length || confirm('全ての音符を消しますか？')) {
+      if (!notes.length || confirm('Clear all notes?')) {
         notes = [];
         sortAndRender();
       }
@@ -1897,3 +1897,4 @@
   </script>
 </body>
 </html>
+
